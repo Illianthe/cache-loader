@@ -43,7 +43,8 @@
     "loader-utils": "^1.1.0",
     "mkdirp": "^0.5.1",
     "neo-async": "^2.6.0",
-    "schema-utils": "^1.0.0"
+    "schema-utils": "^1.0.0",
+    "webpack-log": "^2.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",

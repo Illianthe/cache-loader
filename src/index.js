@@ -9,6 +9,7 @@ const crypto = require('crypto');
 const mkdirp = require('mkdirp');
 const findCacheDir = require('find-cache-dir');
 const BJSON = require('buffer-json');
+const log = require('webpack-log');
 
 const { getOptions } = require('loader-utils');
 const validateOptions = require('schema-utils');
@@ -28,6 +29,8 @@ const defaults = {
   readOnly: false,
   write,
 };
+
+const logger = log({ name: 'cache-loader' });
 
 function pathWithCacheContext(cacheContext, originalPath) {
   if (!cacheContext) {
@@ -111,6 +114,7 @@ function loader(...args) {
         return;
       }
       const [deps, contextDeps] = taskResults;
+      logger.info(`Writing to cache: ${data.cacheKey}`);
       writeFn(
         data.cacheKey,
         {
@@ -146,6 +150,7 @@ function pitch(remainingRequest, prevRequest, dataInput) {
   data.remainingRequest = pathWithCacheContext(cacheContext, remainingRequest);
   data.cacheKey = cacheKeyFn(options, data.remainingRequest);
   readFn(data.cacheKey, (readErr, cacheData) => {
+    logger.info(`Reading from ${data.cacheKey}`);
     if (readErr) {
       callback();
       return;
@@ -174,7 +179,13 @@ function pitch(remainingRequest, prevRequest, dataInput) {
           }
 
           if (stats.mtime.getTime() !== dep.mtime) {
-            eachCallback(true);
+            eachCallback(
+              `dependency: ${
+                dep.path
+              } | src mtime: ${stats.mtime.getTime()} | cache mtime: ${
+                dep.mtime
+              }`
+            );
             return;
           }
           eachCallback();
@@ -183,6 +194,7 @@ function pitch(remainingRequest, prevRequest, dataInput) {
       (err) => {
         if (err) {
           data.startTime = Date.now();
+          logger.info(`Skipping cache ${data.cacheKey}: ${err}`);
           callback();
           return;
         }
